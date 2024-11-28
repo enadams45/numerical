@@ -1,0 +1,730 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double findA(vector<double>a) {
+    if (a[0] == 0) {
+        cout << "Coefficient of the highest power cannot be zero." << endl;
+        exit(1);
+    }
+    double max = -1;
+    for(int i=1; i<a.size(); ++i) {
+        if(max < abs(a[i])) {
+            max = abs(a[i]);
+        }
+    }
+    
+    return 1+max/abs(a[0]);
+}
+
+double f(vector<double>a, double x) {
+    int n = a.size();
+    double func_val = 0;
+    for(int i=0; i<n; ++i) {
+        func_val+=a[i]*pow(x,n-i-1);
+    }
+    return func_val;
+}
+
+void biSection() {
+    int maxPow;
+    cout << "Enter maximum power of the polynomial: ";
+    cin >> maxPow;
+
+    cout << "Enter " << maxPow + 1 << " coefficients: ";
+    vector<double> a(maxPow + 1);
+    for (int i = 0; i <= maxPow; ++i) {
+        cin >> a[i];
+    }
+
+    int n = a.size();
+    double A, B;
+    A = findA(a);
+    B = -A;
+    double f_A = f(a,A);
+    
+    while(f_A*f(a,B) >= 0) {
+        if(static_cast<int>(A) <= static_cast<int>(B)) {
+            cout << "solution may not be found";
+            return;
+        }
+        B+=0.1;
+    }
+    double f_B = f(a,B);
+
+    int count = 0;
+    while(count++<500) {
+        double x = (A+B)/2;
+        double f_x = f(a,x);
+        if (abs(f_x) < 0.0001 || abs(A - B) < 1e-6) {
+            cout << "x: " << x << endl;
+            return;
+        }
+
+        if(f_x*f(a,A)<0) {
+            B = x;
+        }
+        else A = x;
+    }
+    cout << "not found in 500 iterations" << endl;
+}
+
+void falsePosition() {
+    int maxPow;
+    cout << "Enter maximum power of the polynomial: ";
+    cin >> maxPow;
+
+    cout << "Enter " << maxPow + 1 << " coefficients: ";
+    vector<double> a(maxPow + 1);
+    for (int i = 0; i <= maxPow; ++i) {
+        cin >> a[i];
+    }
+
+    int n = a.size();
+    double A, B;
+    A = findA(a);
+    B = -A;
+    double f_A = f(a,A);
+    
+    while(f_A*f(a,B) >= 0) {
+        if(static_cast<int>(A) <= static_cast<int>(B)) {
+            cout << "solution may not be found";
+            return;
+        }
+        B+=0.1;
+    }
+
+    int count = 0;
+    while(count++<500) {
+        double f_a = f(a,A);
+        double f_b = f(a,B);
+        double x = (A * f_b - B * f_a) / (f_b - f_a);
+        double f_x = f(a,x);
+        if (abs(f_x) < 0.0001 || abs(A - B) < 1e-6) {
+            cout << "x: " << x << endl;
+            return;
+        }
+
+        if(f_x*f(a,A)<0) {
+            B = x;
+        }
+        else A = x;
+    }
+    cout << "not found in 500 iterations" << endl;
+}
+
+double df(vector<double>a, double x) {
+    double value = 0;
+    int n = a.size();
+    for(int i=0; i<n-1; ++i) {
+        value += a[i]*(n-i-1)*pow(x,n-i-2);
+    }
+    return value;
+}
+
+void newton() {
+    int maxPow;
+    cout << "Enter maximum power of the polynomial: ";
+    cin >> maxPow;
+
+    cout << "Enter " << maxPow + 1 << " coefficients: ";
+    vector<double> a(maxPow + 1);
+    for (int i = 0; i <= maxPow; ++i) {
+        cin >> a[i];
+    }
+    
+    int count = 0;
+    double x = 4;
+    double x1 = 0;
+
+    while(count++<500) {
+        double f_x = f(a,x);
+        if (abs(f_x) < 0.0001 || abs(x1-x) < 1e-6) {
+            cout << "x: " << x << endl;
+            return;
+        }
+
+        double df_x = df(a,x);
+        if(abs(df_x) <1e-8 ) {
+            cout << "differential is zero" << endl;
+            return;
+        }
+        x1 = x - f_x / df_x;
+        x = x1;
+    }
+    cout << "not found in 500 iterations" << endl;
+}
+
+void secant() {
+    int maxPow;
+    cout << "Enter maximum power of the polynomial: ";
+    cin >> maxPow;
+
+    cout << "Enter " << maxPow + 1 << " coefficients: ";
+    vector<double> a(maxPow + 1);
+    for (int i = 0; i <= maxPow; ++i) {
+        cin >> a[i];
+    }
+    
+    int count = 0;
+    double x;
+    double x1 = 1;
+    double x2 = 10;
+
+    while(count++<500) {
+        double f_x1 = f(a,x1);
+        double f_x2 = f(a,x2);
+        if(abs(f_x2-f_x1) < 1e-8) {
+            return;
+        }
+        x = x2 - (f_x2 * (x2 - x1)) / (f_x2 - f_x1);
+        double f_x = f(a,x);
+
+        if (abs(f_x) < 0.0001 || abs(x1-x) < 1e-6) {
+            cout << "x: " << x << endl;
+            return;
+        }
+
+        x1 = x2;
+        x2 = x;
+    }
+    cout << "not found in 500 iterations" << endl;
+}
+
+void gaussElimination() {
+    int n;
+    cout << "Enter the number of variables: ";
+    cin >> n;
+
+    vector<vector<double>> a(n, vector<double>(n));
+    vector<double> b(n);
+
+    cout << "Enter the coefficients of the equations (row by row):\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> a[i][j];
+        }
+        cin >> b[i];
+    }
+
+    for(int k=0; k<n-1; ++k) {
+        int selectedRow = k;
+        for(int i=k+1; i<n; ++i) {
+            if(abs(a[i][k]) > abs(a[selectedRow][k])) {
+                selectedRow = i;
+            }
+        }
+
+        if(selectedRow != k) {
+            swap(a[selectedRow], a[k]);
+            swap(b[selectedRow], b[k]);
+        }
+
+        if(abs(a[k][k]) >= 1e-8) {
+            for(int i=k+1; i<n; ++i) {
+                double factor = a[i][k]/a[k][k];
+                for(int j=k+1; j<n; ++j) {
+                    a[i][j]-=factor*a[k][j];
+                }
+                b[i]-=factor*b[k];
+            }
+        }
+        else {
+            cout << "singular" << endl;
+            return;
+        }
+
+    }
+
+    if (abs(a[n - 1][n - 1]) < 1e-8) {
+        cout << "Matrix is singular or nearly singular." << endl;
+        return;
+    }
+
+    for(int i=n-1; i>=0; ++i) {
+        for(int j=i+1; j<n; ++j) {
+            b[i] -= a[i][j]*b[j];
+        }
+        b[i]/=a[i][i];
+    }
+
+    cout << fixed << setprecision(6);
+    for (double x : b) {
+        cout << x << " ";
+    }
+    cout << endl;
+}
+void gaussJordanElimination() {
+    int n;
+    cout << "Enter the number of variables: ";
+    cin >> n;
+
+    vector<vector<double>> a(n, vector<double>(n));
+    vector<double> b(n);
+
+    cout << "Enter the augmented matrix (row by row):\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> a[i][j];
+        }
+        cin >> b[i];
+    }
+
+    for (int k = 0; k < n; ++k) {
+        // Partial pivoting
+        int selectedRow = k;
+        for (int i = k + 1; i < n; ++i) {
+            if (abs(a[i][k]) > abs(a[selectedRow][k])) {
+                selectedRow = i;
+            }
+        }
+
+        if (selectedRow != k) {
+            swap(a[selectedRow], a[k]);
+            swap(b[selectedRow], b[k]);
+        }
+
+        // Check for singularity
+        if (abs(a[k][k]) < 1e-8) {
+            cout << "Matrix is singular or nearly singular." << endl;
+            return;
+        }
+
+    
+        double pivot = a[k][k];
+        for (int j = 0; j < n; ++j) {
+            a[k][j] /= pivot;
+        }
+        b[k] /= pivot;
+
+        
+        for (int i = 0; i < n; ++i) {
+            if (i != k) {
+                double factor = a[i][k];
+                for (int j = 0; j < n; ++j) {
+                    a[i][j] -= factor * a[k][j];
+                }
+                b[i] -= factor * b[k];
+            }
+        }
+    }
+
+    cout << fixed << setprecision(6);
+    cout << "Solution: ";
+    for (double x : b) {
+        cout << x << " ";
+    }
+    cout << endl;
+}
+
+
+
+#include <bits/stdc++.h>
+using namespace std;
+
+double rowSumExceptKth(vector<vector<double>>a, int i, int k) {
+    double sum =0;
+    for(int j=0; j<a.size(); ++j) {
+        if(j!=k) {
+            sum+=abs(a[i][j]);
+        }
+    }
+    return sum;
+}
+
+bool isDiagonalDominant(vector<vector<double>>a) {
+    int n = a.size();
+    for(int i=0; i<n; ++i) {
+        if(abs(a[i][i]) < rowSumExceptKth(a, i, i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool makeDiagonalDominant(vector<vector<double>>&a, vector<double>&b) {
+    int n=a.size();
+    
+    for(int j=0; j<n; ++j) {
+        int desiredRow = -1;
+        if(abs(a[j][j])<rowSumExceptKth(a,j,j)) {
+            for(int i=j+1; i<n; ++i) {
+                if(abs(a[i][j]) >= rowSumExceptKth(a,i,j)) {
+                    desiredRow = i;
+                    break;
+                }
+            }
+            if(desiredRow != -1) {
+                swap(a[j],a[desiredRow]);
+                swap(b[j],b[desiredRow]);
+            }
+        }
+        
+    }
+    return isDiagonalDominant(a);
+}
+
+void jacobi() {
+    int n; cin>>n;
+    vector<vector<double>>a(n,vector<double>(n,0));
+    vector<double>b(n,0);
+    for(int i=0; i<n; ++i) {
+        for(int j=0; j<n; ++j) {
+            cin >> a[i][j];
+        }
+        cin >> b[i];
+    }
+
+    if(!isDiagonalDominant(a)) {
+        if(!makeDiagonalDominant(a,b)) {
+            return;
+        }
+    }
+
+    vector<double>x(n,0), x1(n,0);
+
+    int count =0;
+    bool resFound;
+    while(count++<500) {
+
+        for(int i=0; i<n; ++i) {
+            double sum = b[i];
+            for(int j=0; j<n; ++j) {
+                if(i!=j) {
+                    sum-=a[i][j]*x[j];
+                }
+            }
+            x1[i]=sum/a[i][i];
+        }
+
+        resFound = true;
+        for(int i=0; i<n; ++i) {
+            if(abs(x[i]-x1[i]) > 0.0001) {
+                resFound = false;
+                break;
+            }
+        }
+        if(resFound==true) break;
+        x = x1; 
+    }
+    
+    if(resFound==true) {
+        for (int i = 0; i < n; ++i) {
+            cout << "x" << i + 1 << ": " << x1[i] << " ";
+        }
+    }
+
+
+}
+
+
+
+import numpy as np
+import math
+
+def ds(x,n):
+    sum = 0
+    for i in range(n):
+        mul = 1
+        for j in range(n):
+            if i!=j:
+                mul *= (x-j)
+        sum+=mul
+    return sum
+
+def differentiation():
+    x = np.array(list(map(float,input().split())))
+    y = np.array(list(map(float,input().split())))
+    x_val = float(input())
+    h = x[1]-x[0]
+    s = (x_val-x[0])/h
+    n = len(x)
+    mat = np.zeros((n,n))
+    mat[:,0] = y
+    for j in range(1,n):
+        for i in range(n-j):
+            mat[i,j] = mat[i+1,j-1]-mat[i,j-1]
+
+    delta = mat[0]
+    res = 0
+    for i in range(1,n):
+        res = res + delta[i]*ds(s,i)/math.factorial(i)
+
+    res/=h
+    print(res)
+
+differentiation()
+
+
+import numpy as np
+import math
+
+def ds(x,n):
+    sum = 0
+    for i in range(n):
+        mul = 1
+        for j in range(n):
+            if i!=j:
+                mul *= (x+j)
+        sum+=mul
+    return sum
+
+def differentiation():
+    x = np.array(list(map(float,input().split())))
+    y = np.array(list(map(float,input().split())))
+    x_val = float(input())
+    h = x[1]-x[0]
+    s = (x_val-x[-1])/h
+    n = len(x)
+    mat = np.zeros((n,n))
+    mat[:,0] = y[::-1]
+    for j in range(1,n):
+        for i in range(n-j):
+            mat[i,j] = mat[i,j-1]-mat[i+1,j-1]
+
+    delta = mat[0]
+    res = 0
+    for i in range(1,n):
+        res = res + delta[i]*ds(s,i)/math.factorial(i)
+
+    res/=h
+    print(res)
+
+differentiation()
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tabulate import tabulate  # Import the tabulate library for table formatting
+
+
+def straight():
+    x = np.array(list(map(float,input("Enter x values: ").split())))
+    y = np.array(list(map(float,input("Enter y values: ").split())))
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    xy = x*y
+    sum_xy = np.sum(xy)
+    xsquare = x*x
+    sum_xsquare = np.sum(xsquare)
+
+    n = x.size
+    
+    A = [
+        [n, sum_x],
+        [sum_x,sum_xsquare]
+    ]
+    B = [sum_y,sum_xy]
+
+    solution = np.linalg.solve(A,B)
+    a = solution[0]
+    b = solution[1]
+    print(a,b)
+    y1 = a+b*x
+    plt.plot(x,y)
+    plt.plot(x,y1, linestyle="--", color='red')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+
+def parabolic():
+    x = np.array(list(map(float, input("Enter x values: ").split())))
+    y = np.array(list(map(float, input("Enter y values: ").split())))
+    x_point = float(input("Enter x point: "))
+
+    # Pre-compute terms
+    xy = x * y
+    xsquare = x * x
+    xcube = xsquare * x
+    xfour = xsquare * xsquare
+    xsquarey = xsquare * y
+
+    # Compute sums
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(xy)
+    sum_xsquare = np.sum(xsquare)
+    sum_xcube = np.sum(xcube)
+    sum_xfour = np.sum(xfour)
+    sum_xsquarey = np.sum(xsquarey)
+
+    n = x.size
+
+    # Forming the matrices
+    A = [
+        [n, sum_x, sum_xsquare],
+        [sum_x, sum_xsquare, sum_xcube],
+        [sum_xsquare, sum_xcube, sum_xfour]
+    ]
+    B = [sum_y, sum_xy, sum_xsquarey]
+
+    # Solve for coefficients
+    solution = np.linalg.solve(A, B)
+    a, b, c = solution
+
+    # Calculate the fitted y values
+    y1 = a + b * x + c * x * x
+
+    # Display the interpolated value at x_point
+    interpolated_value = a + b * x_point + c * x_point * x_point
+    print(f"Interpolated value at x = {x_point}: {interpolated_value}")
+
+    # Prepare table data
+    table = []
+    for i in range(n):
+        table.append([x[i], y[i], xy[i], xsquarey[i], xsquare[i], xcube[i], xfour[i]])
+
+    # Display the table
+    headers = ["x", "y", "xy", "x^2y", "x^2", "x^3", "x^4"]
+    print("\nTable:")
+    print(tabulate(table, headers=headers, floatfmt=".2f"))
+
+    # Plot the data
+    plt.plot(x, y, '-o', label='Table Data')
+    plt.plot(x, y1, '--', color='red', label='Fitted Data')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+
+
+#straight()
+parabolic()
+    
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tabulate import tabulate  # Import the tabulate library for table formatting
+
+
+def straight():
+    x = np.array(list(map(float,input("Enter x values: ").split())))
+    y = np.array(list(map(float,input("Enter y values: ").split())))
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    xy = x*y
+    sum_xy = np.sum(xy)
+    xsquare = x*x
+    sum_xsquare = np.sum(xsquare)
+
+    n = x.size
+    
+    A = [
+        [n, sum_x],
+        [sum_x,sum_xsquare]
+    ]
+    B = [sum_y,sum_xy]
+
+    solution = np.linalg.solve(A,B)
+    a = solution[0]
+    b = solution[1]
+    print(a,b)
+    y1 = a+b*x
+    plt.plot(x,y)
+    plt.plot(x,y1, linestyle="--", color='red')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+
+def parabolic():
+    x = np.array(list(map(float, input("Enter x values: ").split())))
+    y = np.array(list(map(float, input("Enter y values: ").split())))
+    x_point = float(input("Enter x point: "))
+
+    # Pre-compute terms
+    xy = x * y
+    xsquare = x * x
+    xcube = xsquare * x
+    xfour = xsquare * xsquare
+    xsquarey = xsquare * y
+
+    # Compute sums
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(xy)
+    sum_xsquare = np.sum(xsquare)
+    sum_xcube = np.sum(xcube)
+    sum_xfour = np.sum(xfour)
+    sum_xsquarey = np.sum(xsquarey)
+
+    n = x.size
+
+    # Forming the matrices
+    A = [
+        [n, sum_x, sum_xsquare],
+        [sum_x, sum_xsquare, sum_xcube],
+        [sum_xsquare, sum_xcube, sum_xfour]
+    ]
+    B = [sum_y, sum_xy, sum_xsquarey]
+
+    # Solve for coefficients
+    solution = np.linalg.solve(A, B)
+    a, b, c = solution
+
+    # Calculate the fitted y values
+    y1 = a + b * x + c * x * x
+
+    # Display the interpolated value at x_point
+    interpolated_value = a + b * x_point + c * x_point * x_point
+    print(f"Interpolated value at x = {x_point}: {interpolated_value}")
+
+    # Prepare table data
+    table = []
+    for i in range(n):
+        table.append([x[i], y[i], xy[i], xsquarey[i], xsquare[i], xcube[i], xfour[i]])
+
+    # Display the table
+    headers = ["x", "y", "xy", "x^2y", "x^2", "x^3", "x^4"]
+    print("\nTable:")
+    print(tabulate(table, headers=headers, floatfmt=".2f"))
+
+    # Plot the data
+    plt.plot(x, y, '-o', label='Table Data')
+    plt.plot(x, y1, '--', color='red', label='Fitted Data')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+
+
+#straight()
+parabolic()
+    
+
+
+import numpy as np
+
+f = lambda x: 1/(1+x**2)
+
+def trapezoidal(n, a, b):
+    h = (b-a)/n
+    x=np.arange(a,b+h,h)
+    y=f(x)
+    res = (h/2)*(y[0]+y[-1]+2*np.sum(y[1:n]))
+    print(res)
+
+def simpOneThird(n, a, b):
+    h = (b-a)/n
+    x=np.arange(a,b+h,h)
+    y=f(x)
+    res = (h/3)*(y[0]+y[-1]+4*np.sum(y[1:n:2])+2*np.sum(y[2:n-1:2]))
+    print(res)
+
+def simpThreeThird(n,a,b):
+    h = (b-a)/n
+    x=np.arange(a,b+h,h)
+    y=f(x)
+    res = (3*h/8)*(y[0]+y[-1]+3*np.sum(y[1:n])-np.sum(y[3:n-2:3]))
+    print(res)
+
+n = int(input())
+a,b = map(float,input().split())
+trapezoidal(n,a,b)
+simpOneThird(n,a,b)
+simpThreeThird(n,a,b)
